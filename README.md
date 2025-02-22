@@ -46,7 +46,7 @@ To set up the project locally, follow these steps:
 ## Team Members
 
 - **Paul Beudert** - 61533@novasbe.pt
-- **Member 2** - [Email: PLACEHOLDER]
+- **Sebastian Frey** - 66172@novasbe.pt
 - **Member 3** - [Email: PLACEHOLDER]
 - **Member 4** - [Email: PLACEHOLDER]
 
