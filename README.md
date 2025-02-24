@@ -47,8 +47,8 @@ To set up the project locally, follow these steps:
 
 - **Paul Beudert** - 61533@novasbe.pt
 - **Sebastian Frey** - 66172@novasbe.pt
-- **Member 3** - [Email: PLACEHOLDER]
-- **Member 4** - [Email: PLACEHOLDER]
+- **Felix Bührmann** - 68336@novasbe.pt
+- **Maximilian Kranz** - 67080@novasbe.pt
 
 ## License
 
