@@ -2,7 +2,10 @@ import os
 import pandas as pd
 import requests
 import tarfile
+import ast
+import matplotlib as plt
 from pathlib import Path
+
 
 
 class MovieDataProcessor:
@@ -15,10 +18,14 @@ class MovieDataProcessor:
 
 
     def __init__(self):
-        """Initialize class by downloading, extracting, and loading the dataset."""
-        self._ensure_download_dir()
-        self._download_data()
-        self._extract_data()
+
+        if self.FILE_NAME.exists() and self.EXTRACTED_DIR.exists():
+            print("Dataset already downloaded and extracted. Skipping...")
+        else:
+            self._ensure_download_dir()
+            self._download_data()
+            self._extract_data()
+
         self._load_data()
 
     def _ensure_download_dir(self):
@@ -61,4 +68,56 @@ class MovieDataProcessor:
             print("Datasets successfully loaded!")
         except Exception as e:
             print(f"Error loading datasets: {e}")
+
+    def __movie_type__(self, N=10):
+        """
+        Returns a DataFrame with the N most common movie types and their counts.
+        :param N: int, the number of top movie types to return.
+        :return: pandas DataFrame with columns ['Movie_Type', 'Count']
+        """
+        if not isinstance(N, int):
+            raise ValueError("N must be an integer")
+        
+        # Ensure the DataFrame has column names
+        self.movie_metadata.columns = [str(i) for i in range(len(self.movie_metadata.columns))]
+        
+        # Extract the movie types from column 8
+        all_genres = []
+        for row in self.movie_metadata['8'].dropna():
+            try:
+                genre_dict = ast.literal_eval(row) if isinstance(row, str) else row
+                all_genres.extend(genre_dict.values())
+            except (SyntaxError, ValueError):
+                continue
+        
+        # Count occurrences of each movie type
+        type_counts = pd.Series(all_genres).value_counts().reset_index()
+        type_counts.columns = ['Movie_Type', 'Count']
+        
+        # Return the top N movie types
+        return type_counts.head(N)
+
+        #- [ ] Develop a second method called __actor_count__. This method calculates a pandas dataframe with a histogram of "number of actors" vs "movie counts".
+
+    def __actor_count__(self):
+        """
+        Computes a histogram of the number of actors per movie.
+        Returns a DataFrame with columns ['Number_of_Actors', 'Movie_Count'].
+        """
+        # 1) Group character_metadata by the movie ID (in column 0) and count rows
+        actor_counts = self.character_metadata.groupby(0).size()  
+        #   => This maps each movie ID to its number of actors
+        
+        # 2) Convert that mapping into a histogram:
+        #    - .value_counts() tells how many movies have X actors
+        hist = actor_counts.value_counts().reset_index()
+        hist.columns = ['Number_of_Actors', 'Movie_Count']
+        
+        # 3) Sort by the number of actors (ascending)
+        hist = hist.sort_values('Number_of_Actors').reset_index(drop=True)
+        
+        return hist
+
+
+            
 
