@@ -51,3 +51,6 @@ class MovieDataProcessor:
             print("Data loaded successfully.")
         else:
             print("Dataset file not found.")
+
+# danke für diese tolle Class Paul
+
