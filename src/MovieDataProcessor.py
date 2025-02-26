@@ -1,10 +1,9 @@
 import os
 import pandas as pd
 import requests
-import zipfile
+import tarfile
 from pathlib import Path
-from pydantic import BaseModel
-from typing import Optional
+
 
 class MovieDataProcessor:
     """Class to handle the CMU Movie Corpus dataset."""
@@ -34,14 +33,18 @@ class MovieDataProcessor:
                     f.write(chunk)
             print("Download complete.")
 
+
     def _extract_data(self):
         """Extract dataset if not already extracted."""
         extracted_path = self.DOWNLOAD_DIR / "MovieSummaries"
         if not extracted_path.exists():
             print("Extracting dataset...")
-            with zipfile.ZipFile(self.FILE_NAME, "r") as zip_ref:
-                zip_ref.extractall(self.DOWNLOAD_DIR)
-            print("Extraction complete.")
+            try:
+                with tarfile.open(self.FILE_NAME, "r:gz") as tar:
+                    tar.extractall(self.DOWNLOAD_DIR)
+                print("Extraction complete.")
+            except tarfile.TarError:
+                print("Error: File is not a valid tar.gz archive.")
 
     def _load_data(self):
         """Load datasets into pandas DataFrames."""
@@ -51,3 +54,5 @@ class MovieDataProcessor:
             print("Data loaded successfully.")
         else:
             print("Dataset file not found.")
+
+processor = MovieDataProcessor()
