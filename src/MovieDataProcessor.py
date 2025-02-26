@@ -62,4 +62,3 @@ class MovieDataProcessor:
         except Exception as e:
             print(f"Error loading datasets: {e}")
 
-processor = MovieDataProcessor()
