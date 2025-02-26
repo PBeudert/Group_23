@@ -11,6 +11,8 @@ class MovieDataProcessor:
     DATA_URL = "http://www.cs.cmu.edu/~ark/personas/data/MovieSummaries.tar.gz"
     DOWNLOAD_DIR = Path("downloads/")
     FILE_NAME = DOWNLOAD_DIR / "MovieSummaries.tar.gz"
+    EXTRACTED_DIR = DOWNLOAD_DIR / "MovieSummaries"
+
 
     def __init__(self):
         """Initialize class by downloading, extracting, and loading the dataset."""
@@ -48,11 +50,16 @@ class MovieDataProcessor:
 
     def _load_data(self):
         """Load datasets into pandas DataFrames."""
-        movie_file = self.DOWNLOAD_DIR / "MovieSummaries/MovieSummaries.txt"
-        if movie_file.exists():
-            self.movies_df = pd.read_csv(movie_file, delimiter="\t", header=None)
-            print("Data loaded successfully.")
-        else:
-            print("Dataset file not found.")
+        print("Loading datasets into pandas DataFrames...")
+        try:
+            self.character_metadata = pd.read_csv(self.EXTRACTED_DIR / "character.metadata.tsv", sep='\t', header=None)
+            self.movie_metadata = pd.read_csv(self.EXTRACTED_DIR / "movie.metadata.tsv", sep='\t', header=None)
+            self.name_clusters = pd.read_csv(self.EXTRACTED_DIR / "name.clusters.txt", sep='\t', header=None)
+            self.plot_summaries = pd.read_csv(self.EXTRACTED_DIR / "plot_summaries.txt", sep='\t', header=None)
+            self.tv_tropes_clusters = pd.read_csv(self.EXTRACTED_DIR / "tvtropes.clusters.txt", sep='\t', header=None)
+
+            print("Datasets successfully loaded!")
+        except Exception as e:
+            print(f"Error loading datasets: {e}")
 
 processor = MovieDataProcessor()
