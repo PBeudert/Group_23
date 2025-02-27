@@ -94,7 +94,8 @@ class MovieDataProcessor:
         type_counts = pd.Series(all_genres).value_counts().reset_index()
         type_counts.columns = ['Movie_Type', 'Count']
         if N>len(type_counts):
-            raise KeyError("N is larger than the available movie types")
+            av_movies=len(type_counts)
+            raise KeyError(f"N is larger than the available movie types of {len(type_counts)}")
         # Return the top N movie types
         return type_counts.head(N)
 
