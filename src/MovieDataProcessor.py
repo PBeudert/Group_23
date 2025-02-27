@@ -119,6 +119,100 @@ class MovieDataProcessor:
         
         return hist
 
+    def __actor_distributions__(
+            self,
+            gender: str,
+            max_height: float,
+            min_height: float,
+            plot: bool = False
+    ) -> pd.DataFrame:
+        """
+        Returns a DataFrame of height distributions filtered by gender and height range.
+        Optionally plots the distribution.
 
-            
+        :param gender: str
+            Accepts "All" or one of the distinct non-missing gender values in the dataset.
+        :param max_height: float
+            The maximum height (in meters) to filter actors.
+        :param min_height: float
+            The minimum height (in meters) to filter actors.
+        :param plot: bool
+            If True, plots the height distribution histogram.
+        :return: pd.DataFrame
+            A DataFrame with columns ['Height', 'Count'] representing height distribution.
+        :raises ValueError:
+            If gender is not a string or if height values are not numerical.
+        """
+
+        # Ensure input types are correct
+        if not isinstance(gender, str):
+            raise ValueError("Gender must be a string.")
+        if not isinstance(max_height, (int, float)) or not isinstance(min_height, (int, float)):
+            raise ValueError("Max and min heights must be numerical values.")
+
+        # Define correct column mappings
+        HEIGHT_COLUMN = "6"  # Actor height in meters
+        GENDER_COLUMN = "5"  # Actor gender
+
+        # Ensure column names are correctly set
+        self.character_metadata.columns = [str(i) for i in range(len(self.character_metadata.columns))]
+
+        df = self.character_metadata.copy()
+
+        # Drop rows where gender or height is missing
+        df = df[df[GENDER_COLUMN].notna() & df[HEIGHT_COLUMN].notna()]
+
+        # Filter by gender (except when "All" is selected)
+        if gender != "All":
+            available_genders = df[GENDER_COLUMN].unique()
+            if gender not in available_genders:
+                raise ValueError(
+                    f"Gender '{gender}' not found. Available values: {available_genders}"
+                )
+            df = df[df[GENDER_COLUMN] == gender]
+
+        # Convert height column to numeric (it should be in meters)
+        try:
+            df[HEIGHT_COLUMN] = df[HEIGHT_COLUMN].astype(float)
+        except ValueError:
+            raise ValueError("Some height values are non-numeric and cannot be converted to float.")
+
+        # Filter by height range
+        df = df[(df[HEIGHT_COLUMN] >= min_height) & (df[HEIGHT_COLUMN] <= max_height)]
+
+        # Return a height histogram
+        height_counts = df[HEIGHT_COLUMN].value_counts().sort_index().reset_index()
+        height_counts.columns = ["Height", "Count"]
+
+        # Optional: plot histogram
+        if plot:
+            import matplotlib.pyplot as plt
+            plt.figure(figsize=(7, 5))
+            plt.hist(df[HEIGHT_COLUMN], bins=20, edgecolor="black", alpha=0.7)
+            plt.xlabel("Actor Height (meters)")
+            plt.ylabel("Frequency")
+            plt.title(f"Height Distribution (Gender: {gender}, Range: {min_height}-{max_height})")
+            plt.show()
+
+        return height_counts
+
+    def debug_column_4(self):
+        """Prints column 4 of the character metadata dataset for debugging."""
+        if hasattr(self, "character_metadata"):
+            print("First 10 values of column 4:")
+            print(self.character_metadata[4].head(10))  # Show first 10 rows
+
+            print("\nUnique values (first 20):")
+            print(self.character_metadata[4].unique()[:20])  # Show first 20 unique values
+
+            print("\nData type of column 4:")
+            print(self.character_metadata[4].dtype)
+        else:
+            print("Error: character_metadata is not loaded.")
+
+
+
+
+
+
 
