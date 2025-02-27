@@ -75,8 +75,8 @@ class MovieDataProcessor:
         :param N: int, the number of top movie types to return.
         :return: pandas DataFrame with columns ['Movie_Type', 'Count']
         """
-        if not isinstance(N, int):
-            raise ValueError("N must be an integer")
+        if not isinstance(N, int) or N<1:
+            raise ValueError("N must be a postitive integer")
         
         # Ensure the DataFrame has column names
         self.movie_metadata.columns = [str(i) for i in range(len(self.movie_metadata.columns))]
@@ -93,7 +93,8 @@ class MovieDataProcessor:
         # Count occurrences of each movie type
         type_counts = pd.Series(all_genres).value_counts().reset_index()
         type_counts.columns = ['Movie_Type', 'Count']
-        
+        if N>len(type_counts):
+            raise KeyError("N is larger than the available movie types")
         # Return the top N movie types
         return type_counts.head(N)
 
