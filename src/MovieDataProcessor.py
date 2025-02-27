@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import tarfile
 import ast
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from pathlib import Path
 
 
@@ -145,51 +145,52 @@ class MovieDataProcessor:
             If gender is not a string or if height values are not numerical.
         """
 
-        # Ensure input types are correct
-        if not isinstance(gender, str):
-            raise ValueError("Gender must be a string.")
-        if not isinstance(max_height, (int, float)) or not isinstance(min_height, (int, float)):
-            raise ValueError("Max and min heights must be numerical values.")
+        # Ensure column names are correctly set
+        self.character_metadata.columns = [str(i) for i in range(len(self.character_metadata.columns))]
+
+        df_actors = self.character_metadata.copy()
 
         # Define correct column mappings
         HEIGHT_COLUMN = "6"  # Actor height in meters
         GENDER_COLUMN = "5"  # Actor gender
 
-        # Ensure column names are correctly set
-        self.character_metadata.columns = [str(i) for i in range(len(self.character_metadata.columns))]
-
-        df = self.character_metadata.copy()
-
         # Drop rows where gender or height is missing
-        df = df[df[GENDER_COLUMN].notna() & df[HEIGHT_COLUMN].notna()]
+        df_actors = df_actors[df_actors[GENDER_COLUMN].notna() & df_actors[HEIGHT_COLUMN].notna()]
+
+
+        available_genders=df_actors[GENDER_COLUMN].unique()
+
+        # Ensure input types are correct
+        if not isinstance(gender, str):
+            raise ValueError(f"Gender must be a string.")
+        if not gender in available_genders:
+            raise ValueError(f"available genders are {available_genders}")
+        if not isinstance(max_height, (int, float)) or not isinstance(min_height, (int, float)):
+            raise ValueError("Max and min heights must be numerical values.")
+
+
 
         # Filter by gender (except when "All" is selected)
         if gender != "All":
-            available_genders = df[GENDER_COLUMN].unique()
-            if gender not in available_genders:
-                raise ValueError(
-                    f"Gender '{gender}' not found. Available values: {available_genders}"
-                )
-            df = df[df[GENDER_COLUMN] == gender]
+            df_actors = df_actors[df_actors[GENDER_COLUMN] == gender]
 
         # Convert height column to numeric (it should be in meters)
         try:
-            df[HEIGHT_COLUMN] = df[HEIGHT_COLUMN].astype(float)
+            df_actors[HEIGHT_COLUMN] = df_actors[HEIGHT_COLUMN].astype(float)
         except ValueError:
             raise ValueError("Some height values are non-numeric and cannot be converted to float.")
 
         # Filter by height range
-        df = df[(df[HEIGHT_COLUMN] >= min_height) & (df[HEIGHT_COLUMN] <= max_height)]
+        df_actors = df_actors[(df_actors[HEIGHT_COLUMN] >= min_height) & (df_actors[HEIGHT_COLUMN] <= max_height)]
 
         # Return a height histogram
-        height_counts = df[HEIGHT_COLUMN].value_counts().sort_index().reset_index()
+        height_counts = df_actors[HEIGHT_COLUMN].value_counts().sort_index().reset_index()
         height_counts.columns = ["Height", "Count"]
 
         # Optional: plot histogram
         if plot:
-            import matplotlib.pyplot as plt
             plt.figure(figsize=(7, 5))
-            plt.hist(df[HEIGHT_COLUMN], bins=20, edgecolor="black", alpha=0.7)
+            plt.hist(df_actors[HEIGHT_COLUMN], bins=20, edgecolor="black", alpha=0.7)
             plt.xlabel("Actor Height (meters)")
             plt.ylabel("Frequency")
             plt.title(f"Height Distribution (Gender: {gender}, Range: {min_height}-{max_height})")
