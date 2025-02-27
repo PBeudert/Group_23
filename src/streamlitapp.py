@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 from MovieDataProcessor import MovieDataProcessor
 
 st.title("Movie Data Processor")
@@ -49,15 +50,26 @@ if gender == "Male":
 elif gender == "Female":
     gender = "F"
 
+
 df_actor_distr=processor.__actor_distributions__(gender,max_h,min_h,False)
 
-fug, ax = plt.subplots(figsize=(10, 6))
-ax.bar(df_actor_distr["Height"], df_actor_distr["Count"], color="darkblue")
-ax.set_xlabel("Heights")
-ax.set_ylabel("Actor height occurences")
-ax.set_title("Histogram of Actor height distributions")
-ax.set_ylim(0, df_actor_distr["Count"].max() * 1.2)  # Adds 10% space above highest bar
+hist_values, bin_edges = np.histogram(df_actor_distr["Height"], bins=20,alpha=0.7)
 
-plt.xticks(rotation=90, ha="right")
-plt.tight_layout()
+# Plot histogram
+fug, ax = plt.subplots(figsize=(10, 6))
+
+ax.bar(bin_edges[:-1], hist_values, width=np.diff(bin_edges), color="darkblue", edgecolor="black", align="edge")
+
+# Labels
+ax.set_xlabel("Heights")
+ax.set_ylabel("Actor Height Occurrences")
+ax.set_title("Histogram of Actor Height Distributions")
+
+# Adjust Y-axis to prevent cutoff
+ax.set_ylim(0, hist_values.max() * 1.1)  # Adds 10% space above highest bar
+
+# Rotate x-axis labels for better readability
+plt.xticks(rotation=45, ha="right")
+
+# Show plot
 st.pyplot(fug)
