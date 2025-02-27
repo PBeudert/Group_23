@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import matplotlib.pyplot as plt
 from MovieDataProcessor import MovieDataProcessor
 
 st.title("Movie Data Processor")
@@ -17,6 +17,14 @@ N = st.number_input("What number of movie types would you like to see", min_valu
 
 # Display movie types
 st.write("### Top Movie Types")
-st.dataframe(processor.__movie_type__(N))  # Use user-selected value
+df= processor.__movie_type__(N)  # Use user-selected value
 
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.bar(df["Movie_Type"], df["Count"], color="skyblue")
+ax.set_xlabel("Movie Type")
+ax.set_ylabel("Count")
+ax.set_title("Histogram of Movie Types")
+plt.xticks(rotation=45, ha="right")
 
+# Show the plot in Streamlit
+st.pyplot(fig)
