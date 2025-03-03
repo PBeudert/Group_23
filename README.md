@@ -40,7 +40,7 @@ To set up the project locally, follow these steps:
    ```
 4. Run the Streamlit app (once implemented):
    ```bash
-   streamlit run streamlit_app.py
+   streamlit run src/StreamlitApp.py
    ```
 
 ## Team Members
