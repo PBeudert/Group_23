@@ -191,15 +191,3 @@ class MovieDataProcessor:
         return height_counts
 
     def debug_column_4(self):
-        """Prints column 4 of the character metadata dataset for debugging."""
-        if hasattr(self, "character_metadata"):
-            print("First 10 values of column 4:")
-            print(self.character_metadata["4"].head(10))  # Show first 10 rows
-
-            print("\nUnique values (first 20):")
-            print(self.character_metadata["4"].unique()[:20])  # Show first 20 unique values
-
-            print("\nData type of column 4:")
-            print(self.character_metadata["4"].dtype)
-        else:
-            print("Error: character_metadata is not loaded.")
