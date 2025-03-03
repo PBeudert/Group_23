@@ -56,4 +56,4 @@ max_height = st.number_input("Enter Maximum Height (m)", min_value=1.1, max_valu
 result_df = processor.actor_distributions(gender, max_height, min_height, plot=True)
 
 # Ensure Streamlit properly renders the plot
-st.pyplot(fig)
+st.pyplot(plt)
