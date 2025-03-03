@@ -189,5 +189,3 @@ class MovieDataProcessor:
             
 
         return height_counts
-
-    def debug_column_4(self):
