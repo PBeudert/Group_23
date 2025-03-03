@@ -182,10 +182,11 @@ class MovieDataProcessor:
         if plot:
             plt.figure(figsize=(7, 5))
             plt.hist(df_actors[HEIGHT_COLUMN], bins=20, edgecolor="black", alpha=0.7)
-            plt.xlabel("Actor Height (meters)")
+            plt.xlabel("Actor Height in Meters")
             plt.ylabel("Frequency")
-            plt.title(f"Height Distribution (Gender: {gender}, Range: {min_height}-{max_height})")
+            plt.title(f"Height Distribution For {gender} Actors From {min_height} To {max_height}")
             plt.show()
+            
 
         return height_counts
 

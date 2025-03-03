@@ -15,6 +15,6 @@ processor = MovieDataProcessor()
 
 processor.__actor_distributions__("F",2.1,1.3,True)
 
-
+processor.debug_column_4()
 
 print("hello world")
