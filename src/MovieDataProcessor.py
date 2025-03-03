@@ -76,7 +76,7 @@ class MovieDataProcessor:
         except Exception as e:
             print(f"Error loading datasets: {e}")
 
-    def __movie_type__(self, N=10):
+    def movie_type(self, N=10):
         """
         Returns a DataFrame with the N most common movie types and their counts.
         :param N: int, the number of top movie types to return.
@@ -108,7 +108,7 @@ class MovieDataProcessor:
 
         return type_counts.head(N)
 
-    def __actor_count__(self):
+    def actor_count(self):
         """
         Computes a histogram of the number of actors per movie.
         Returns a DataFrame with columns ['Number_of_Actors', 'Movie_Count'].
@@ -120,7 +120,7 @@ class MovieDataProcessor:
         hist = hist.sort_values('Number_of_Actors').reset_index(drop=True)
         return hist
 
-    def __actor_distributions__(
+    def actor_distributions(
             self,
             gender: str,
             max_height: float,
@@ -189,3 +189,4 @@ class MovieDataProcessor:
             
 
         return height_counts
+
