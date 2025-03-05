@@ -65,14 +65,35 @@ class MovieDataProcessor:
             self.tv_tropes_clusters = pd.read_csv(self.EXTRACTED_DIR / "tvtropes.clusters.txt", 
                                                  sep='\t', header=None)
 
-            # Convert column names to strings so numeric columns become "0", "1", ...
-            self.character_metadata.columns = self.character_metadata.columns.map(str)
-            self.movie_metadata.columns = self.movie_metadata.columns.map(str)
-            self.name_clusters.columns = self.name_clusters.columns.map(str)
-            self.plot_summaries.columns = self.plot_summaries.columns.map(str)
-            self.tv_tropes_clusters.columns = self.tv_tropes_clusters.columns.map(str)
+            # Assign column names to movie_metadata
+            self.movie_metadata.columns = [
+                "Movie_ID", "Freebase_ID", "Movie_Title", "Release_Date", "Revenue",
+                "Runtime", "Languages", "Countries", "Genres"
+            ]
 
-            print("Datasets successfully loaded!")
+            # Assign column names to character_metadata
+            self.character_metadata.columns = [
+                "Movie_ID", "Freebase_ID", "Release_Date", "Character_Name", "Actor_Birthdate",
+                "Actor_Gender", "Actor_Height", "Actor_Ethnicity", "Actor_Name", "Actor_Age",
+                "Freebase_Char_ID_1", "Freebase_Char_ID_2", "Freebase_Char_ID_3"
+            ]
+
+
+            # Assign column names to name_clusters
+            self.name_clusters.columns = [
+                "Character_Name", "Freebase_ID"
+            ]
+
+            # Assign column names to plot_summaries
+            self.plot_summaries.columns = [
+                "Movie_ID", "Plot_Summary"
+            ]
+
+            # Assign column names to tv_tropes_clusters
+            self.tv_tropes_clusters.columns = [
+                "Trope", "Character_Movie_Details"
+            ]
+
         except Exception as e:
             print(f"Error loading datasets: {e}")
 
@@ -83,15 +104,15 @@ class MovieDataProcessor:
         :return: pandas DataFrame with columns ['Movie_Type', 'Count']
         """
         if not isinstance(N, int) or N < 1:
-            raise ValueError("N must be a postitive integer")
+            raise ValueError("N must be a positive integer")
 
         # Ensure we have the correct genre column
-        if '8' not in self.movie_metadata.columns:
-            raise KeyError("Column '8' not found in movie_metadata. Check dataset format.")
+        if "Genres" not in self.movie_metadata.columns:
+            raise KeyError("Column 'Genres' not found in movie_metadata. Check dataset format.")
 
-        # Extract the movie types from column "8"
+        # Extract the movie types from the Genres column
         all_genres = []
-        for row in self.movie_metadata['8'].dropna():
+        for row in self.movie_metadata["Genres"].dropna():
             try:
                 # row could be a string or already a dict
                 genre_dict = ast.literal_eval(row) if isinstance(row, str) else row
@@ -113,13 +134,16 @@ class MovieDataProcessor:
         Computes a histogram of the number of actors per movie.
         Returns a DataFrame with columns ['Number_of_Actors', 'Movie_Count'].
         """
-        # character_metadata: col "0" => movie ID
-        actor_counts = self.character_metadata.groupby("0").size()
+        # Group by "Movie_ID" instead of column "0"
+        actor_counts = self.character_metadata.groupby("Movie_ID").size()
+        
+        # Compute histogram of number of actors per movie
         hist = actor_counts.value_counts().reset_index()
         hist.columns = ['Number_of_Actors', 'Movie_Count']
         hist = hist.sort_values('Number_of_Actors').reset_index(drop=True)
+        
         return hist
-
+        
     def actor_distributions(
             self,
             gender: str,
@@ -130,67 +154,57 @@ class MovieDataProcessor:
         """
         Returns a DataFrame of height distributions filtered by gender and height range.
         Optionally plots the distribution.
-
-        :param gender: str ("All" or one of the distinct non-missing gender values in the dataset).
-        :param max_height: float
-        :param min_height: float
-        :param plot: bool
-        :return: pd.DataFrame with columns ['Height', 'Count']
         """
 
-        # Column "5" => gender, "6" => height in meters
-        GENDER_COLUMN = "5"
-        HEIGHT_COLUMN = "6"
-
         # Ensure columns exist
-        if GENDER_COLUMN not in self.character_metadata.columns or HEIGHT_COLUMN not in self.character_metadata.columns:
-            raise KeyError(f"Required columns '{GENDER_COLUMN}' or '{HEIGHT_COLUMN}' not found in character_metadata.")
+        if "Actor_Gender" not in self.character_metadata.columns or "Actor_Height" not in self.character_metadata.columns:
+            raise KeyError("Required columns 'Actor_Gender' or 'Actor_Height' not found in character_metadata.")
 
         df_actors = self.character_metadata.copy()
 
-        # Drop rows where gender or height is missing
-        df_actors = df_actors[df_actors[GENDER_COLUMN].notna() & df_actors[HEIGHT_COLUMN].notna()]
+        # ✅ Keep only numeric height values (remove invalid ones)
+        df_actors = df_actors[df_actors["Actor_Height"].astype(str).str.match(r'^\d+(\.\d+)?$', na=False)]
 
-        available_genders = df_actors[GENDER_COLUMN].unique()
+        # ✅ Convert height to float after removing invalid values
+        df_actors["Actor_Height"] = df_actors["Actor_Height"].astype(float)
 
         # Validate input types
-        if not isinstance(gender, str):
-            raise ValueError("Gender must be a string.")
-        if gender != "All" and gender not in available_genders:
-            raise ValueError(f"available genders are {available_genders}")
-        if not isinstance(max_height, (int, float)) or not isinstance(min_height, (int, float)):
+        if not all(isinstance(val, (int, float)) for val in [min_height, max_height]):
             raise ValueError("Max and min heights must be numerical values.")
 
-        # Filter by gender if not "All"
+        if min_height >= max_height:
+            raise ValueError("min_height must be less than max_height.")
+
+        # Filter by gender
+        available_genders = df_actors["Actor_Gender"].dropna().unique()
+        if gender != "All" and gender not in available_genders:
+            raise ValueError(f"Invalid gender selection. Available options: {available_genders}")
         if gender != "All":
-            df_actors = df_actors[df_actors[GENDER_COLUMN] == gender]
+            df_actors = df_actors[df_actors["Actor_Gender"] == gender]
 
-        # Convert height to float (should already be if real data is consistent)
-        try:
-            df_actors[HEIGHT_COLUMN] = df_actors[HEIGHT_COLUMN].astype(float)
-        except ValueError:
-            raise ValueError("Some height values are non-numeric and cannot be converted to float.")
+        # Filter height range
+        df_actors = df_actors[(df_actors["Actor_Height"] >= min_height) & (df_actors["Actor_Height"] <= max_height)]
 
-        # Filter by height range
-        df_actors = df_actors[(df_actors[HEIGHT_COLUMN] >= min_height) & (df_actors[HEIGHT_COLUMN] <= max_height)]
+        # Check if data remains after filtering
+        if df_actors.empty:
+            print("Warning: No actors found in the given height range.")
+            return pd.DataFrame(columns=["Height", "Count"])
 
         # Build the histogram
-        height_counts = df_actors[HEIGHT_COLUMN].value_counts().sort_index().reset_index()
+        height_counts = df_actors["Actor_Height"].value_counts().sort_index().reset_index()
         height_counts.columns = ["Height", "Count"]
 
         # Optional plot
         if plot:
             plt.figure(figsize=(7, 5))
-            plt.hist(df_actors[HEIGHT_COLUMN], bins=20, edgecolor="black", alpha=0.7)
+            plt.hist(df_actors["Actor_Height"], bins=20, edgecolor="black", alpha=0.7)
             plt.xlabel("Actor Height in Meters")
             plt.ylabel("Frequency")
-            plt.title(f"Height Distribution For {gender} Actors From {min_height} To {max_height}")
+            plt.title(f"Height Distribution For {gender} Actors ({min_height}m - {max_height}m)")
             plt.show()
-            
 
         return height_counts
-    
-    def releases(self, genre=None):
+        def releases(self, genre=None):
         """
         Returns a DataFrame showing the number of movie releases per year.
         If a genre is specified, it filters only movies of that genre.
