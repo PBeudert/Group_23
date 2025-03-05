@@ -189,6 +189,7 @@ class MovieDataProcessor:
             
 
         return height_counts
+    
     def releases(self, genre=None):
         """
         Returns a DataFrame showing the number of movie releases per year.
@@ -198,14 +199,20 @@ class MovieDataProcessor:
         :return: pandas DataFrame with columns ['Year', 'Movie_Count']
         """
         # Ensure required columns exist
-        if '1' not in self.movie_metadata.columns or '8' not in self.movie_metadata.columns:
-            raise KeyError("Required columns '1' (year) or '8' (genres) not found in movie_metadata.")
+        if '3' not in self.movie_metadata.columns or '8' not in self.movie_metadata.columns:
+            raise KeyError("Required columns '3' (year) or '8' (genres) not found in movie_metadata.")
 
-        # Extract year and genre information
-        df_movies = self.movie_metadata[['1', '8']].copy()
-        df_movies = df_movies.rename(columns={'1': 'Year', '8': 'Genres'})
+        # Extract relevant columns
+        df_movies = self.movie_metadata[['3', '8']].copy()
+        df_movies = df_movies.rename(columns={'3': 'Year', '8': 'Genres'})
 
-        # Drop missing years and convert to integer
+        # Drop missing years
+        df_movies = df_movies.dropna(subset=['Year'])
+
+        # Extract the year from dates (if applicable)
+        df_movies['Year'] = df_movies['Year'].astype(str).str.extract(r'(\d{4})')  # Extract four-digit year
+
+        # Convert to integer after extraction
         df_movies = df_movies.dropna(subset=['Year'])
         df_movies['Year'] = df_movies['Year'].astype(int)
 
@@ -219,8 +226,14 @@ class MovieDataProcessor:
                     return False
 
             df_movies = df_movies[df_movies['Genres'].apply(genre_filter)]
+            print(f"Data shape after filtering by genre '{genre}':", df_movies.shape)
+
+        # If no valid data remains after filtering, return empty DataFrame
+        if df_movies.empty:
+            print(f"No movies found for genre '{genre}'.")
+            return pd.DataFrame(columns=['Year', 'Movie_Count'])
 
         # Count movies per year
         releases_per_year = df_movies.groupby('Year').size().reset_index(name='Movie_Count')
-        
+
         return releases_per_year
