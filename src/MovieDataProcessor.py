@@ -204,50 +204,50 @@ class MovieDataProcessor:
             plt.show()
 
         return height_counts
-        def releases(self, genre=None):
+    def releases(self, genre=None):
         """
         Returns a DataFrame showing the number of movie releases per year.
         If a genre is specified, it filters only movies of that genre.
-        
+
         :param genre: str or None, the genre to filter movies by (default: None, includes all movies)
         :return: pandas DataFrame with columns ['Year', 'Movie_Count']
         """
+
         # Ensure required columns exist
-        if '3' not in self.movie_metadata.columns or '8' not in self.movie_metadata.columns:
-            raise KeyError("Required columns '3' (year) or '8' (genres) not found in movie_metadata.")
+        if "Release_Date" not in self.movie_metadata.columns or "Genres" not in self.movie_metadata.columns:
+            raise KeyError("Required columns 'Release_Date' or 'Genres' not found in movie_metadata.")
 
         # Extract relevant columns
-        df_movies = self.movie_metadata[['3', '8']].copy()
-        df_movies = df_movies.rename(columns={'3': 'Year', '8': 'Genres'})
+        df_movies = self.movie_metadata[["Release_Date", "Genres"]].copy()
 
         # Drop missing years
-        df_movies = df_movies.dropna(subset=['Year'])
+        df_movies = df_movies.dropna(subset=["Release_Date"])
 
         # Extract the year from dates (if applicable)
-        df_movies['Year'] = df_movies['Year'].astype(str).str.extract(r'(\d{4})')  # Extract four-digit year
+        df_movies["Year"] = df_movies["Release_Date"].astype(str).str.extract(r"(\d{4})")  # Extract four-digit year
 
         # Convert to integer after extraction
-        df_movies = df_movies.dropna(subset=['Year'])
-        df_movies['Year'] = df_movies['Year'].astype(int)
+        df_movies = df_movies.dropna(subset=["Year"])
+        df_movies["Year"] = df_movies["Year"].astype(int)
 
         # If a genre is specified, filter movies that contain that genre
         if genre:
             def genre_filter(genre_dict):
                 try:
-                    parsed_genres = ast.literal_eval(genre_dict)
+                    parsed_genres = ast.literal_eval(genre_dict)  # Convert string to dictionary
                     return genre in parsed_genres.values()
                 except (SyntaxError, ValueError):
                     return False
 
-            df_movies = df_movies[df_movies['Genres'].apply(genre_filter)]
+            df_movies = df_movies[df_movies["Genres"].apply(genre_filter)]
             print(f"Data shape after filtering by genre '{genre}':", df_movies.shape)
 
         # If no valid data remains after filtering, return empty DataFrame
         if df_movies.empty:
             print(f"No movies found for genre '{genre}'.")
-            return pd.DataFrame(columns=['Year', 'Movie_Count'])
+            return pd.DataFrame(columns=["Year", "Movie_Count"])
 
         # Count movies per year
-        releases_per_year = df_movies.groupby('Year').size().reset_index(name='Movie_Count')
+        releases_per_year = df_movies.groupby("Year").size().reset_index(name="Movie_Count")
 
         return releases_per_year
