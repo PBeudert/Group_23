@@ -5,6 +5,8 @@ import tarfile
 import ast
 import matplotlib.pyplot as plt
 from pathlib import Path
+import ollama
+from ollama import chat, ChatResponse
 
 class MovieDataProcessor:
     """Class to handle the CMU Movie Corpus dataset."""
@@ -285,3 +287,19 @@ class MovieDataProcessor:
             birth_counts = df_births.groupby("Month").size().reset_index(name="Birth_Count")
 
         return birth_counts
+    
+
+    def generate_movie_summary(self, movie_title):
+        """
+        Uses Ollama to generate a summary for a given movie title.
+
+        :param movie_title: str, the title of the movie
+        :return: str, the generated summary
+        """
+        prompt = f"Provide a short and engaging summary for the movie '{movie_title}'."
+        
+        try:
+            response = ollama.chat("mistral", messages=[{"role": "user", "content": prompt}])
+            return response["message"]
+        except Exception as e:
+            return f"Error generating summary: {e}"

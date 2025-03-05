@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from MovieDataProcessor import MovieDataProcessor
 
+
 st.title("Movie Data Processor")
 
 # Cache the processor so it doesn't reload on every UI interaction
@@ -127,3 +128,17 @@ elif page == "Chronological Info":
 
     # Show plot
     st.pyplot(fig)
+
+elif page == "Movie Summarizer":
+    st.title("Movie Summarizer (Powered by Ollama)")
+
+    # Input box for the movie title
+    movie_title = st.text_input("Enter a Movie Title:", "")
+
+    if st.button("Generate Summary"):
+        if movie_title.strip():
+            summary = processor.generate_movie_summary(movie_title)
+            st.write("### Movie Summary:")
+            st.write(summary)
+        else:
+            st.write("Please enter a movie title.")
