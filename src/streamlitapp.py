@@ -16,7 +16,8 @@ processor = load_processor()
 
 # Navigation Sidebar
 st.sidebar.title("Navigation")
-page = st.radio("Go to", ["Main Page", "Chronological Info"], horizontal=True)
+page = st.radio("Go to", ["Main Page", "Chronological Info", "Movie Summarizer"], horizontal=True)
+
 
 if page == "Main Page":
     st.header("Top Movie Types")
