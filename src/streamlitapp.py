@@ -88,3 +88,42 @@ elif page == "Chronological Info":
         st.pyplot(fig)
     else:
         st.write("No data available for the selected genre.")
+    
+        # Add Birth Year/Month Plot Below the Previous Plot
+    st.header("Actor Births Over Time")
+
+    # Dropdown for Year vs. Month Selection
+    time_selection = st.selectbox("Group Births By", ["Year", "Month"])
+
+    # Convert selection to format used in `ages` method
+    group_by = "Y" if time_selection == "Year" else "M"
+
+    # Get the birth count data
+    births_df = processor.ages(group_by)
+
+    # Ensure all 12 months are represented (if using months)
+    if group_by == "M":
+        all_months = pd.DataFrame({"Month": range(1, 13)})
+        births_df = all_months.merge(births_df, on="Month", how="left").fillna(0)
+
+    # Plot the data
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(births_df.iloc[:, 0], births_df["Birth_Count"], color="purple", width=0.9)
+
+    # Set axis labels
+    ax.set_xlabel(time_selection)
+    ax.set_ylabel("Number of Births")
+    ax.set_title(f"Actor Births Per {time_selection}")
+
+    # Adjust x-axis for Yearly and Monthly views
+    if group_by == "Y":
+        ax.set_xlim(left=1900, right=2010)  # Ensure years are properly displayed
+
+    elif group_by == "M":
+        ax.set_xticks(births_df["Month"])  # Ensure ticks align with bars
+        ax.set_xticklabels(["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
+        ax.set_xlim(0.5, 12.5)  # Extend x-axis slightly to prevent cutoff
+
+    # Show plot
+    st.pyplot(fig)

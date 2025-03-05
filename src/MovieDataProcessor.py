@@ -251,3 +251,37 @@ class MovieDataProcessor:
         releases_per_year = df_movies.groupby("Year").size().reset_index(name="Movie_Count")
 
         return releases_per_year
+
+    def ages(self, group_by="Y"):
+        """
+        Computes a DataFrame counting actor births per year ('Y') or per month ('M').
+        
+        :param group_by: str, 'Y' for year (default) or 'M' for month.
+        :return: pandas DataFrame with columns ['Year' or 'Month', 'Birth_Count']
+        """
+        # Ensure the required column exists
+        if "Actor_Birthdate" not in self.character_metadata.columns:
+            raise KeyError("Required column 'Actor_Birthdate' not found in character_metadata.")
+
+        # Drop missing birthdates
+        df_births = self.character_metadata.dropna(subset=["Actor_Birthdate"]).copy()
+
+        # Extract Year and Month from birthdate
+        df_births["Year"] = df_births["Actor_Birthdate"].astype(str).str.extract(r"(\d{4})")
+        df_births["Month"] = df_births["Actor_Birthdate"].astype(str).str.extract(r"-(\d{2})-")
+
+        # Convert to numeric values
+        df_births["Year"] = pd.to_numeric(df_births["Year"], errors="coerce")
+        df_births["Month"] = pd.to_numeric(df_births["Month"], errors="coerce")
+
+        # Default to yearly count if an invalid option is passed
+        if group_by not in ["Y", "M"]:
+            group_by = "Y"
+
+        # Count occurrences
+        if group_by == "Y":
+            birth_counts = df_births.groupby("Year").size().reset_index(name="Birth_Count")
+        else:  # group_by == "M"
+            birth_counts = df_births.groupby("Month").size().reset_index(name="Birth_Count")
+
+        return birth_counts
