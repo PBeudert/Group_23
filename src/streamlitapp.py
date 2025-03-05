@@ -67,7 +67,7 @@ elif page == "Chronological Info":
     st.title("Chronological Movie Releases")
     
     # Dropdown for selecting genre
-    available_genres = ["Action", "Comedy", "Drama", "Horror", "Romance", "Sci-Fi", "Fantasy", "Thriller", "Documentary", "Animation"]
+    available_genres = ["Action", "Comedy", "Drama", "Horror", "Romance", "Science Fiction", "Fantasy", "Thriller", "Documentary", "Animation"]
     selected_genre = st.selectbox("Select a genre", [None] + available_genres)
     
     # Retrieve the data
