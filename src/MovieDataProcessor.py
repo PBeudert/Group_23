@@ -189,4 +189,38 @@ class MovieDataProcessor:
             
 
         return height_counts
+    def releases(self, genre=None):
+        """
+        Returns a DataFrame showing the number of movie releases per year.
+        If a genre is specified, it filters only movies of that genre.
+        
+        :param genre: str or None, the genre to filter movies by (default: None, includes all movies)
+        :return: pandas DataFrame with columns ['Year', 'Movie_Count']
+        """
+        # Ensure required columns exist
+        if '1' not in self.movie_metadata.columns or '8' not in self.movie_metadata.columns:
+            raise KeyError("Required columns '1' (year) or '8' (genres) not found in movie_metadata.")
 
+        # Extract year and genre information
+        df_movies = self.movie_metadata[['1', '8']].copy()
+        df_movies = df_movies.rename(columns={'1': 'Year', '8': 'Genres'})
+
+        # Drop missing years and convert to integer
+        df_movies = df_movies.dropna(subset=['Year'])
+        df_movies['Year'] = df_movies['Year'].astype(int)
+
+        # If a genre is specified, filter movies that contain that genre
+        if genre:
+            def genre_filter(genre_dict):
+                try:
+                    parsed_genres = ast.literal_eval(genre_dict)
+                    return genre in parsed_genres.values()
+                except (SyntaxError, ValueError):
+                    return False
+
+            df_movies = df_movies[df_movies['Genres'].apply(genre_filter)]
+
+        # Count movies per year
+        releases_per_year = df_movies.groupby('Year').size().reset_index(name='Movie_Count')
+        
+        return releases_per_year
