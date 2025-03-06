@@ -6,8 +6,28 @@ import ast
 import matplotlib.pyplot as plt
 from pathlib import Path
 import ollama
-from ollama import chat, ChatResponse
 
+import random
+from typing import Optional
+from pydantic import BaseModel, field_validator
+from pydantic.functional_validators import field_validator
+
+class MovieInfo(BaseModel):
+    title: str
+    summary: str
+    genres: str
+
+    @field_validator("title")
+    def title_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Title must be a non-empty string.")
+        return v
+
+    @field_validator("summary")
+    def summary_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Summary must be a non-empty string.")
+        return v
 class MovieDataProcessor:
     """Class to handle the CMU Movie Corpus dataset."""
     
@@ -95,6 +115,15 @@ class MovieDataProcessor:
             self.tv_tropes_clusters.columns = [
                 "Trope", "Character_Movie_Details"
             ]
+
+            ### THis is new
+            self.merged_df = pd.merge(
+            self.movie_metadata, 
+            self.plot_summaries,
+            on="Movie_ID",
+            how="inner"  # only keep rows that exist in both
+            )       
+            ####   
 
         except Exception as e:
             print(f"Error loading datasets: {e}")
@@ -303,3 +332,137 @@ class MovieDataProcessor:
             return response["message"]
         except Exception as e:
             return f"Error generating summary: {e}"
+        
+
+
+
+        
+    def parse_genre_dictionary(self, genre_dict_str: str) -> str:
+            """
+            Some rows in 'Genres' might be stored like:
+            {"/m/01jfsb": "Thriller", "/m/06n90": "Science Fiction"}
+            This helper function extracts just the values (e.g. "Thriller, Science Fiction").
+
+            :param genre_dict_str: A string representation of a dict
+            :return: Comma-separated string of genre values
+            """
+            # In many datasets, "Genres" might already be a Python dict. 
+            # If it's a string that *looks* like a dict, we can safely eval it 
+            # (but be aware of security concerns; for a hackathon it’s probably fine).
+            if not genre_dict_str:
+                return ""
+
+            try:
+                genre_dict = eval(genre_dict_str)
+                if isinstance(genre_dict, dict):
+                    return ", ".join(genre_dict.values())
+                else:
+                    # If it’s not a dict, just return the original or handle accordingly
+                    return str(genre_dict_str)
+            except:
+                # If parsing fails, just return the raw string
+                return str(genre_dict_str)
+
+    def get_random_movie(self) -> MovieInfo:
+        """
+        Picks a random row from the merged DataFrame, parses the genres,
+        and returns a MovieInfo pydantic model.
+        """
+        if self.merged_df.empty:
+            raise ValueError("No movie data available.")
+
+        random_idx = random.randint(0, len(self.merged_df) - 1)
+        row = self.merged_df.iloc[random_idx]
+
+        title = row["Movie_Title"]
+        summary = row["Plot_Summary"]
+        parsed_genres = self.parse_genre_dictionary(row["Genres"])
+
+        # Build the pydantic model
+        movie_info = MovieInfo(
+            title=title,
+            summary=summary,
+            genres=parsed_genres
+        )
+        return movie_info
+
+    def classify_genres_with_llm(self, summary: str) -> str:
+        """
+        Calls your local LLM (e.g. Ollama) to classify the movie's summary into genres.
+        Prompt-engineer it so it tries to ONLY output the genre(s).
+        """
+        # Example prompt:
+        prompt = f"""
+You are a helpful assistant that classifies a movie plot into appropriate genres.
+Read the following summary and output ONLY the genres that best describe it.
+No explanations, no extra text. Just the genre(s).
+
+Summary:
+{summary}
+        """
+
+        try:
+            response = ollama.chat(
+                "mistral",  # or whichever model name
+                messages=[{"role": "user", "content": prompt}]
+            )
+            # Print or inspect the structure of the response
+            print(response)  # For debugging, check the actual structure
+
+            if hasattr(response, "message") and hasattr(response.message, "content"):
+                llm_output = response.message.content.strip()  # Accessing 'content' safely
+            else:
+                return "Error: Unexpected response format from LLM."
+
+            if not llm_output:
+                return "No genres found in response."
+
+            return llm_output
+        except Exception as e:
+            return f"Error during classification: {e}"
+        
+    def evaluate_llm_classification(self, db_genres: str, llm_genres: str) -> str:
+        """
+        Asks the LLM to compare the genres from the database with its own classified genres
+        and determine if the classification was correct.
+        """
+
+        prompt = f"""
+    You are a movie classification assistant.
+
+    Your task:
+    1. You will receive two sets of genres: 
+    - 'Database Genres': The actual genres from a movie database.
+    - 'LLM Genres': The genres you classified based on the movie summary.
+    
+    2. Compare these two lists:
+    - Are they similar?
+    - Did you add any incorrect genres?
+    - Did you miss any important genres?
+    - Give a final judgment: Did you classify this movie correctly? Answer with "Yes" or "No".
+
+    **Database Genres:** {db_genres}  
+    **LLM Genres:** {llm_genres}  
+
+    Respond in a structured format:
+    - Correct Classification: (Yes/No)
+    - Extra Genres Added: (List if any)
+    - Missing Genres: (List if any)
+    - Final Thoughts: (Brief explanation)
+    """
+
+        try:
+            response = ollama.chat(
+                "mistral",  # or whichever model you are using
+                messages=[{"role": "user", "content": prompt}]
+            )
+
+            # Extract response safely
+            if hasattr(response, "message") and hasattr(response.message, "content"):
+                evaluation = response.message.content.strip()
+            else:
+                return "Error: Unexpected response format from LLM."
+
+            return evaluation
+        except Exception as e:
+            return f"Error during evaluation: {e}"

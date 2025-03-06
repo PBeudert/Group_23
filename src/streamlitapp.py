@@ -131,15 +131,56 @@ elif page == "Chronological Info":
     st.pyplot(fig)
 
 elif page == "Movie Summarizer":
-    st.title("Movie Summarizer (Powered by Ollama)")
+    st.title("Shuffle: Random Movie Classification")
 
-    # Input box for the movie title
-    movie_title = st.text_input("Enter a Movie Title:", "")
+    if st.button("Shuffle"):
+        # 1) Grab a random movie
+        movie_info = processor.get_random_movie()
 
-    if st.button("Generate Summary"):
-        if movie_title.strip():
-            summary = processor.generate_movie_summary(movie_title)
-            st.write("### Movie Summary:")
-            st.write(summary)
-        else:
-            st.write("Please enter a movie title.")
+        # 2) Display the random movie's title & summary in the first text box
+        st.subheader("Random Movie Title & Summary")
+        st.text_area(
+            label="Title & Summary",
+            value=f"Title: {movie_info.title}\n\nPlot Summary:\n{movie_info.summary}",
+            height=200
+        )
+
+        # 3) Display the genres from the database in the second text box
+        st.subheader("Genres (From Database)")
+        st.text_area(
+            label="Genres in DB",
+            value=movie_info.genres,
+            height=70
+        )
+
+        # 4) Classify the summary via your LLM
+        llm_genres = processor.classify_genres_with_llm(movie_info.summary)
+
+        # 5) Show the classification result in the third text box
+        st.subheader("LLM Classification")
+        st.text_area(
+            label="LLM-decided Genres",
+            value=llm_genres,
+            height=70
+        )
+
+        # Store the genres for evaluation
+        st.session_state["db_genres"] = movie_info.genres
+        st.session_state["llm_genres"] = llm_genres
+
+    # Evaluation Section
+    if "db_genres" in st.session_state and "llm_genres" in st.session_state:
+        if st.button("Evaluate Classification"):
+            evaluation_result = processor.evaluate_llm_classification(
+                st.session_state["db_genres"], st.session_state["llm_genres"]
+            )
+
+            st.subheader("Evaluation Result")
+            st.text_area(
+                label="LLM's Self-Evaluation",
+                value=evaluation_result,
+                height=150
+            )
+    else:
+        st.write("Click the **Shuffle** button to pick a random movie and see its genres!")
+    
