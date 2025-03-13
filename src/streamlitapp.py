@@ -21,49 +21,60 @@ page = st.radio("Go to", ["Main Page", "Chronological Info", "Movie Summarizer"]
 
 if page == "Main Page":
     st.header("Top Movie Types")
-    # User input for number of movie types
-    N = st.number_input("What number of movie types would you like to see", min_value=1, max_value=50, value=10, step=1)
     
-    # Display movie types
-    df_movie_type = processor.movie_type(N)  # Use user-selected value
+    # 🎨 Add color picker for movie types plot
+    movie_color = st.color_picker("Click and Pick your favorite color!", "#87CEEB")  # skyblue default
+    
+    N = st.number_input("What number of movie types would you like to see", min_value=1, max_value=50, value=10, step=1)
+    df_movie_type = processor.movie_type(N)
     
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.bar(df_movie_type["Movie_Type"], df_movie_type["Count"], color="skyblue")
+    ax.bar(df_movie_type["Movie_Type"], df_movie_type["Count"], color=movie_color)
     ax.set_xlabel("Movie Type")
     ax.set_ylabel("Count")
     ax.set_title("Histogram of Movie Types")
     plt.xticks(rotation=45, ha="right")
-    
-    # Show the plot in Streamlit
     st.pyplot(fig)
-    
+
     st.header("Number of Movies versus Number of Actors")
+
+    # 🎨 Add color picker for actor count plot
+    actor_color = st.color_picker("Click and Pick your favorite color!", "#008000")  # green default
+
     df_actor_count = processor.actor_count()
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.bar(df_actor_count["Number_of_Actors"], df_actor_count["Movie_Count"], color="green")
+    ax.bar(df_actor_count["Number_of_Actors"], df_actor_count["Movie_Count"], color=actor_color)
     ax.set_xlabel("Number of Actors")
     ax.set_ylabel("Number of Movies")
     ax.set_title("Histogram of Number of Actors")
     plt.xticks(rotation=45, ha="right")
-    
     st.pyplot(fig)
-    
+
     st.header("Actor Height Distribution")
-    # Dropdown for gender
+
     gender = st.selectbox("Select Gender", ["All", "Male", "Female"])
     if gender == "Male":
         gender = "M"
     elif gender == "Female":
         gender = "F"
-    
-    # Input fields for height range
+
     min_height = st.number_input("Enter Minimum Height (m)", min_value=1.0, max_value=2.1, value=1.5, step=0.1)
     max_height = st.number_input("Enter Maximum Height (m)", min_value=1.1, max_value=2.3, value=2.0, step=0.1)
-    
-    result_df = processor.actor_distributions(gender, max_height, min_height, plot=True)
-    
-    # Ensure Streamlit properly renders the plot
-    st.pyplot(plt)
+
+    # 🎨 Add color picker for height distribution plot
+    height_color = st.color_picker("Click and Pick your favorite color!", "#1E90FF")  # dodgerblue default
+
+    # Get DataFrame and plot
+    result_df = processor.actor_distributions(gender, max_height, min_height, plot=False)
+
+    # Plot manually with selected color
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.hist(result_df["Height"] * 100, bins=20, alpha=0.7, color=height_color, edgecolor="black")
+    ax.set_xlabel("Height (cm)")
+    ax.set_ylabel("Frequency")
+    ax.set_title(f"Height Distribution ({gender})")
+    st.pyplot(fig)
+
 
 elif page == "Chronological Info":
     st.title("Chronological Movie Releases")
