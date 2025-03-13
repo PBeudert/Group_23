@@ -15,7 +15,6 @@ def load_processor():
 processor = load_processor()
 
 # Navigation Sidebar
-st.sidebar.title("Navigation")
 page = st.radio("Go to", ["Main Page", "Chronological Info", "Movie Summarizer"], horizontal=True)
 
 
@@ -23,7 +22,7 @@ if page == "Main Page":
     st.header("Top Movie Types")
     
     # 🎨 Add color picker for movie types plot
-    movie_color = st.color_picker("Click and Pick your favorite color!", "#87CEEB")  # skyblue default
+    movie_color = st.color_picker("Click and Pick your favorite color!", "#C0C0C0")  # skyblue default
     
     N = st.number_input("What number of movie types would you like to see", min_value=1, max_value=50, value=10, step=1)
     df_movie_type = processor.movie_type(N)
@@ -39,7 +38,7 @@ if page == "Main Page":
     st.header("Number of Movies versus Number of Actors")
 
     # 🎨 Add color picker for actor count plot
-    actor_color = st.color_picker("Click and Pick your favorite color!", "#008000")  # green default
+    actor_color = st.color_picker("Click and Pick your favorite color!", "#C0C0C1")  # green default
 
     df_actor_count = processor.actor_count()
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -62,7 +61,7 @@ if page == "Main Page":
     max_height = st.number_input("Enter Maximum Height (m)", min_value=1.1, max_value=2.3, value=2.0, step=0.1)
 
     # 🎨 Add color picker for height distribution plot
-    height_color = st.color_picker("Click and Pick your favorite color!", "#1E90FF")  # dodgerblue default
+    height_color = st.color_picker("Click and Pick your favorite color!", "#C0C0C2")  # dodgerblue default
 
     # Get DataFrame and plot
     result_df = processor.actor_distributions(gender, max_height, min_height, plot=False)
@@ -82,6 +81,7 @@ elif page == "Chronological Info":
     # Dropdown for selecting genre
     available_genres = ["Action", "Comedy", "Drama", "Horror", "Romance", "Science Fiction", "Fantasy", "Thriller", "Documentary", "Animation"]
     selected_genre = st.selectbox("Select a genre", [None] + available_genres)
+    movie_color = st.color_picker("Click and Pick your favorite color!", "#C0C0C0")  # skyblue default
     
     # Retrieve the data
     releases_df = processor.releases(selected_genre)
@@ -89,7 +89,7 @@ elif page == "Chronological Info":
     if not releases_df.empty:
         # Plot the data
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.bar(releases_df["Year"], releases_df["Movie_Count"], color="blue")
+        ax.bar(releases_df["Year"], releases_df["Movie_Count"], color=movie_color)
         ax.set_xlabel("Year")
         ax.set_ylabel("Number of Movies Released")
         ax.set_xlim(left=1900) 
@@ -107,7 +107,8 @@ elif page == "Chronological Info":
 
     # Dropdown for Year vs. Month Selection
     time_selection = st.selectbox("Group Births By", ["Year", "Month"])
-
+    movie_color = st.color_picker("Click and Pick your favorite color!", "#C0C0C1")  # skyblue default
+    
     # Convert selection to format used in `ages` method
     group_by = "Y" if time_selection == "Year" else "M"
 
@@ -121,7 +122,7 @@ elif page == "Chronological Info":
 
     # Plot the data
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(births_df.iloc[:, 0], births_df["Birth_Count"], color="purple", width=0.9)
+    ax.bar(births_df.iloc[:, 0], births_df["Birth_Count"], color=movie_color, width=0.9)
 
     # Set axis labels
     ax.set_xlabel(time_selection)
