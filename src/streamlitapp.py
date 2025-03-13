@@ -4,6 +4,110 @@ import matplotlib.pyplot as plt
 import numpy as np
 from MovieDataProcessor import MovieDataProcessor
 
+# Configure page settings - must be first Streamlit command
+st.set_page_config(
+    page_title="Movie Data Processor",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# Initialize theme in session state if it doesn't exist
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+
+# Theme toggle in sidebar
+st.sidebar.title("Settings")
+with st.sidebar.expander("Theme Settings"):
+    # Create radio buttons for theme selection
+    selected_theme = st.radio(
+        "Choose Theme",
+        options=["Light", "Dark"],
+        index=0 if st.session_state.theme == "light" else 1,
+        key="theme_selector"
+    )
+    
+    # Apply theme based on the selection
+    if selected_theme.lower() == "dark":
+        st.session_state.theme = "dark"
+    else:
+        st.session_state.theme = "light"
+
+# Apply theme CSS based on current session state
+if st.session_state.theme == "dark":
+    # Apply dark theme
+    st.markdown("""
+    <style>
+    .stApp {
+        background-color: #0E1117 !important;
+        color: #FAFAFA !important;
+    }
+    .stRadio label {
+        color: #FFFFFF !important;
+        font-weight: 500 !important;
+    }
+    /* Fix other elements in dark mode */
+    .stTextInput label, .stNumberInput label, .stSelectbox label {
+        color: #FFFFFF !important;
+    }
+    /* Fix info boxes in dark mode */
+    .stAlert {
+        color: #FAFAFA !important;
+    }
+    .stAlert a {
+        color: #4DADFF !important;
+    }
+    /* Fix all text elements */
+    p, span, div, h1, h2, h3, h4, h5, h6 {
+        color: #FAFAFA !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    # Apply light theme
+    st.markdown("""
+    <style>
+    .stApp {
+        background-color: white !important;
+        color: #262730 !important;
+    }
+    .stRadio label {
+        color: #262730 !important;
+        font-weight: 500 !important;
+    }
+    /* Fix other elements in light mode */
+    .stTextInput label, .stNumberInput label, .stSelectbox label {
+        color: #262730 !important;
+    }
+    /* Fix info boxes in light mode */
+    .stAlert {
+        color: #262730 !important;
+    }
+    /* Fix all text elements */
+    p, span, div, h1, h2, h3, h4, h5, h6 {
+        color: #262730 !important;
+    }
+    /* Make sure info box text is visible */
+    .stAlert p {
+        color: #262730 !important;
+    }
+    .element-container div.stMarkdown p {
+        color: #262730 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Always apply these styles regardless of theme
+st.markdown("""
+<style>
+/* Ensure navigation options are always visible with good contrast */
+.stRadio label {
+    font-size: 1rem !important;
+}
+.stButton button {
+    font-weight: bold;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.title("Movie Data Processor")
 
@@ -15,8 +119,7 @@ def load_processor():
 processor = load_processor()
 
 # Navigation Sidebar
-st.sidebar.title("Navigation")
-page = st.radio("Go to", ["Main Page", "Chronological Info", "Movie Summarizer"], horizontal=True)
+page = st.radio("Go to", ["Main Page", "Chronological Info", "Movie Summarizer", "Become the main character"], horizontal=True)
 
 
 if page == "Main Page":
@@ -183,4 +286,44 @@ elif page == "Movie Summarizer":
             )
     else:
         st.write("Click the **Shuffle** button to pick a random movie and see its genres!")
+
+elif page == "Become the main character":
+    st.title("Become the Main Character")
+    st.write("Enter your name and an OpenAI API key to generate a personalized movie plot where you're the star!")
     
+    # Input field for API key (password field for security)
+    api_key = st.text_input("Enter your OpenAI API key", type="password", help="Your API key will not be stored")
+    
+    # Input field for name
+    name = st.text_input("Enter your name", help="This name will be used as the main character in a random movie plot")
+    
+    # Button to generate personalized plot
+    if st.button("Generate My Movie"):
+        if not name or not api_key:
+            st.error("Please enter both your name and an API key.")
+        else:
+            # Show loading spinner while generating
+            with st.spinner("Creating your personalized movie plot..."):
+                try:
+                    # Call the personalize_movie_plot function
+                    personalized_plot = processor.personalize_movie_plot(name, api_key)
+                    
+                    # Display the result
+                    st.subheader("Your Personalized Movie Plot")
+                    st.text_area(
+                        label="",
+                        value=personalized_plot,
+                        height=400
+                    )
+                except ValueError as ve:
+                    st.error(f"Error: {str(ve)}")
+                except Exception as e:
+                    st.error(f"Something went wrong: {str(e)}")
+    
+    # Add some helpful information and disclaimers
+    st.info("""
+    **Note**: 
+    - This feature requires a valid OpenAI API key
+    - Your API key is used only for this request and is not stored
+    - You may be charged by OpenAI for the API usage
+    """)  

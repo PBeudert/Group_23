@@ -6,7 +6,7 @@ import ast
 import matplotlib.pyplot as plt
 from pathlib import Path
 import ollama
-
+from openai import OpenAI  
 import random
 from typing import Optional
 from pydantic import BaseModel, field_validator
@@ -466,3 +466,79 @@ Summary:
             return evaluation
         except Exception as e:
             return f"Error during evaluation: {e}"
+
+    def personalize_movie_plot(self, name: str, api_key: str) -> str:
+        """
+        Creates a personalized movie plot based on a random movie but with the given name as the main character.
+        
+        This function:
+        1. Gets a random movie from the dataset
+        2. Uses OpenAI to rewrite the plot with the provided name as the main character
+        3. Returns the personalized plot
+        
+        :param name: str, the name of the person to make the main character
+        :param api_key: str, the OpenAI API key to use for the request
+        :return: str, the personalized movie plot
+        
+        :raises ValueError: If name is empty or invalid or if the API key is empty
+        :raises RuntimeError: If there's an issue with OpenAI API processing
+        """
+        # Validate input
+        if not name or not isinstance(name, str) or not name.strip():
+            raise ValueError("Name must be a non-empty string.")
+        
+        if not api_key or not isinstance(api_key, str) or not api_key.strip():
+            raise ValueError("API key must be a non-empty string.")
+        
+        name = name.strip()
+        api_key = api_key.strip()
+        
+        try:
+            # Get a random movie
+            movie_info = self.get_random_movie()
+            
+            # Create prompt for OpenAI
+            prompt = f"""
+    Rewrite the following movie plot to make a person named "{name}" the main character.
+    Make appropriate adjustments to the storyline to naturally incorporate "{name}" as the protagonist,
+    while keeping the core plot elements, setting, and theme intact.
+    
+    Original Movie: "{movie_info.title}"
+    Original Plot: {movie_info.summary}
+    
+    Please provide ONLY the rewritten plot, no explanations or other text.
+    """
+            
+            try:
+                # Create a temporary OpenAI client with the provided API key
+                client = OpenAI(api_key=api_key)
+                
+                # Call OpenAI API
+                response = client.chat.completions.create(
+                    model="gpt-4o",  
+                    messages=[
+                        {"role": "system", "content": "You are a creative assistant that rewrites movie plots."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=1000
+                )
+                
+                # Extract response safely from OpenAI format
+                if hasattr(response, "choices") and len(response.choices) > 0:
+                    personalized_plot = response.choices[0].message.content.strip()
+                else:
+                    return f"Failed to personalize plot for '{movie_info.title}'. Unexpected response format."
+                
+                if not personalized_plot:
+                    return f"Failed to generate personalized plot for '{movie_info.title}'."
+                
+                # Add information about the original movie
+                result = f"Personalized plot for '{name}' based on '{movie_info.title}':\n\n{personalized_plot}"
+                return result
+                
+            except Exception as e:
+                return f"Error while personalizing plot with OpenAI: {str(e)}"
+        
+        except ValueError as ve:
+            return f"Error getting random movie: {str(ve)}"
