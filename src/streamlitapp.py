@@ -15,6 +15,12 @@ st.set_page_config(
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
 
+# Store height values in session state to maintain consistency
+if "min_height" not in st.session_state:
+    st.session_state.min_height = 1.5
+if "max_height" not in st.session_state:
+    st.session_state.max_height = 2.0
+
 # Theme toggle in sidebar
 st.sidebar.title("Settings")
 with st.sidebar.expander("Theme Settings"):
@@ -160,15 +166,44 @@ if page == "Main Page":
         gender = "M"
     elif gender == "Female":
         gender = "F"
+ # Height range selection with validation logic
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Min height input - limit to max_height
+        new_min_height = st.number_input(
+            "Enter Minimum Height (m)", 
+            min_value=1.0, 
+            max_value=st.session_state.max_height,
+            value=st.session_state.min_height, 
+            step=0.1,
+            key="min_height_input"
+        )
+        
+        # Update session state if changed
+        if new_min_height != st.session_state.min_height:
+            st.session_state.min_height = new_min_height
+    
+    with col2:
+        # Max height input - must be >= min_height
+        new_max_height = st.number_input(
+            "Enter Maximum Height (m)", 
+            min_value=st.session_state.min_height, 
+            max_value=2.3,
+            value=max(st.session_state.max_height, st.session_state.min_height), 
+            step=0.1,
+            key="max_height_input"
+        )
+        
+        # Update session state if changed
+        if new_max_height != st.session_state.max_height:
+            st.session_state.max_height = new_max_height
 
-    min_height = st.number_input("Enter Minimum Height (m)", min_value=1.0, max_value=2.1, value=1.5, step=0.1)
-    max_height = st.number_input("Enter Maximum Height (m)", min_value=1.1, max_value=2.3, value=2.0, step=0.1)
-
-    # 🎨 Add color picker for height distribution plot
+# 🎨 Add color picker for height distribution plot
     height_color = st.color_picker("Click and Pick your favorite color!", "#C0C0C2")  # dodgerblue default
 
     # Get DataFrame and plot
-    result_df = processor.actor_distributions(gender, max_height, min_height, plot=False)
+    result_df = processor.actor_distributions(gender, st.session_state.max_height, st.session_state.min_height, plot=False)
 
     # Plot manually with selected color
     fig, ax = plt.subplots(figsize=(8, 5))
