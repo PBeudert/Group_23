@@ -4,16 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from MovieDataProcessor import MovieDataProcessor
 
-# Configure page settings - must be first Streamlit command
+# Configure page settings and layout
 st.set_page_config(
     page_title="Movie Data Processor",
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-# Initialize theme in session state if it doesn't exist
-if "theme" not in st.session_state:
-    st.session_state.theme = "light"
 
 # Store height values in session state to maintain consistency
 if "min_height" not in st.session_state:
@@ -21,99 +17,6 @@ if "min_height" not in st.session_state:
 if "max_height" not in st.session_state:
     st.session_state.max_height = 2.0
 
-# Theme toggle in sidebar
-st.sidebar.title("Settings")
-with st.sidebar.expander("Theme Settings"):
-    # Create radio buttons for theme selection
-    selected_theme = st.radio(
-        "Choose Theme",
-        options=["Light", "Dark"],
-        index=0 if st.session_state.theme == "light" else 1,
-        key="theme_selector"
-    )
-    
-    # Apply theme based on the selection
-    if selected_theme.lower() == "dark":
-        st.session_state.theme = "dark"
-    else:
-        st.session_state.theme = "light"
-
-# Apply theme CSS based on current session state
-if st.session_state.theme == "dark":
-    # Apply dark theme
-    st.markdown("""
-    <style>
-    .stApp {
-        background-color: #0E1117 !important;
-        color: #FAFAFA !important;
-    }
-    .stRadio label {
-        color: #FFFFFF !important;
-        font-weight: 500 !important;
-    }
-    /* Fix other elements in dark mode */
-    .stTextInput label, .stNumberInput label, .stSelectbox label {
-        color: #FFFFFF !important;
-    }
-    /* Fix info boxes in dark mode */
-    .stAlert {
-        color: #FAFAFA !important;
-    }
-    .stAlert a {
-        color: #4DADFF !important;
-    }
-    /* Fix all text elements */
-    p, span, div, h1, h2, h3, h4, h5, h6 {
-        color: #FAFAFA !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    # Apply light theme
-    st.markdown("""
-    <style>
-    .stApp {
-        background-color: white !important;
-        color: #262730 !important;
-    }
-    .stRadio label {
-        color: #262730 !important;
-        font-weight: 500 !important;
-    }
-    /* Fix other elements in light mode */
-    .stTextInput label, .stNumberInput label, .stSelectbox label {
-        color: #262730 !important;
-    }
-    /* Fix info boxes in light mode */
-    .stAlert {
-        color: #262730 !important;
-    }
-    /* Fix all text elements */
-    p, span, div, h1, h2, h3, h4, h5, h6 {
-        color: #262730 !important;
-    }
-    /* Make sure info box text is visible */
-    .stAlert p {
-        color: #262730 !important;
-    }
-    .element-container div.stMarkdown p {
-        color: #262730 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Always apply these styles regardless of theme
-st.markdown("""
-<style>
-/* Ensure navigation options are always visible with good contrast */
-.stRadio label {
-    font-size: 1rem !important;
-}
-.stButton button {
-    font-weight: bold;
-}
-</style>
-""", unsafe_allow_html=True)
 
 st.title("Movie Data Processor")
 
@@ -374,4 +277,4 @@ elif page == "Become the main character":
     - This feature requires a valid OpenAI API key
     - Your API key is used only for this request and is not stored
     - You may be charged by OpenAI for the API usage
-    """)  
+    """)
